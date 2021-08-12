@@ -3,4 +3,8 @@
 
 This is another very humble experiment i built while studying basic computer graphics.
 
-The model, skinning information and animation are loaded from a glft file...
+This time i am struggling on skinning meshes and then animating them.
+
+Models and animations are loaded from a GLTF file.
+
+To be continued...
