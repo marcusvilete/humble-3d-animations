@@ -1,5 +1,6 @@
 import { AnimatedModel } from "./Animation/animatedModel";
 import { AnimatedRenderer } from "./Animation/animatedRenderer";
+import { HumbleAnimation } from "./Animation/animation";
 import { degToRad } from "./Etc/mathFunctions";
 import { webglUtils } from "./Etc/webglUtils";
 import { FileLoader } from "./File/fileLoader";
@@ -102,12 +103,13 @@ function main(): void {
             staticRenderer
         );
 
+
         model.transform.position = new Vector3(3, 5, 0);
         model.transform.scale = new Vector3(0.4347, 0.4347, 0.4347);
         model.transform.rotate(new Vector3(degToRad(90), 0, 0));
         model.texture = texture;
-        models.push(model);
-        scene.rootNodes.push(model);
+        //models.push(model);
+        //scene.rootNodes.push(model);
 
         model.update = () => {
             //model.transform.rotate(new Vector3(Time.deltaTime * degToRad(90), 0, 0));
@@ -123,9 +125,19 @@ function main(): void {
             gltfModel.rootJoint,
             gltfModel.jointCount,
             animatedRenderer);
-       
+        
+        model2.transform.rotate(new Vector3(degToRad(85), 0, 0));
+        model2.transform.translate(new Vector3(0, 0, -10));
 
-        model2.transform.position = new Vector3(0, 0, 0);
+
+
+        let animAttack = HumbleAnimation.fromGLTFAnimation(gltfModel.animations[0]);
+        let animSwim = HumbleAnimation.fromGLTFAnimation(gltfModel.animations[1]);
+
+        model2.doAnimation(animAttack);
+
+
+        
         model2.texture = texture;
         models.push(model2);
         scene.rootNodes.push(model2);

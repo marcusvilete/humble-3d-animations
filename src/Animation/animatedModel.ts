@@ -2,6 +2,8 @@ import { Matrix4 } from "../Rendering/matrix";
 import { Model } from "../Rendering/model";
 import { Renderer } from "../Rendering/renderer";
 import { Time } from "../time";
+import { HumbleAnimation } from "./animation";
+import { Animator } from "./animator";
 import { Joint } from "./joint";
 
 export class AnimatedModel extends Model {
@@ -14,12 +16,13 @@ export class AnimatedModel extends Model {
     weights: WebGLBuffer;
     indexCount: number;
     texture: WebGLTexture;
-    test: boolean;
 
     //skin data
     boneTexture: WebGLTexture
     rootJoint: Joint
     jointCount: number;
+
+    animator: Animator;
 
     constructor(positions: Float32Array, normals: Float32Array, textureCoords: Float32Array,
         indices: Uint16Array, joints: Uint8Array, weights: Float32Array, rootJoint: Joint, jointCount: number, renderer: Renderer) {
@@ -56,48 +59,39 @@ export class AnimatedModel extends Model {
         if (rootJoint) {
             rootJoint.setParent(this);
         }
+        this.animator = new Animator(this);
     }
-    //xDeg: 0;
+
+    doAnimation(animation: HumbleAnimation) {
+        this.animator.doAnimation(animation);
+    }
+
     update(): void {
-        //this.xDeg += degToRad(30) * Time.deltaTime;
-        //this.transl += 1 * deltaTime;
 
-        let xrotation = Matrix4.makeXRotation(Math.sin(Time.time) * .5);
+        this.animator.update();
 
-        //let xtransl = Matrix4.makeTranslation(0, this.transl, 0);
-        //let inverseWorld = Matrix4.inverse(this.model.transform.getWorldMatrix());
+        // let xrotation = Matrix4.makeXRotation(Math.sin(Time.time) * .5);
 
-        //this.transform.updateLocalMatrix();
-        //this.transform.updateWorldMatrix();
-        //this.rootJoint.updateTransforms();
+        // animateJoints(this.rootJoint, this.transform.getWorldMatrix());
+        // function animateJoints(joint: Joint, parent: Matrix4) {
 
+        //     let worldBindMatrix = Matrix4.multiplyMatrices4(joint.transform.getLocalMatrix(), parent);
+        //     //let worldBindMatrix = joint.transform.getWorldMatrix();
+        //     worldBindMatrix = Matrix4.multiplyMatrices4(xrotation, worldBindMatrix);
 
+        //     joint.animatedMatrix = Matrix4.makeIdentity();
+        //     joint.animatedMatrix = Matrix4.multiplyMatrices4(worldBindMatrix, joint.animatedMatrix);
+        //     joint.animatedMatrix = Matrix4.multiplyMatrices4(joint.inverseBindMatrix, joint.animatedMatrix);
 
-        animateJoints(this.rootJoint, this.transform.getWorldMatrix());
-        function animateJoints(joint: Joint, parent:Matrix4) {
-
-            let worldBindMatrix = Matrix4.multiplyMatrices4(joint.transform.getLocalMatrix(), parent);
-            //let worldBindMatrix = joint.transform.getWorldMatrix();
-            worldBindMatrix = Matrix4.multiplyMatrices4(xrotation, worldBindMatrix);
-
-            joint.animatedMatrix = Matrix4.makeIdentity();
-            joint.animatedMatrix = Matrix4.multiplyMatrices4(worldBindMatrix, joint.animatedMatrix);
-            joint.animatedMatrix = Matrix4.multiplyMatrices4(joint.inverseBindMatrix, joint.animatedMatrix);
-
-            if (joint.children) {
-                joint.children.forEach(child => {
-                    animateJoints(child as Joint, worldBindMatrix);
-                });
-            }
-        }
+        //     if (joint.children) {
+        //         joint.children.forEach(child => {
+        //             animateJoints(child as Joint, worldBindMatrix);
+        //         });
+        //     }
+        // }
 
         let arr = new Float32Array(this.jointCount * 16);
         flattenJointMatrices(this.rootJoint);
-
-        if (!this.test) {
-            this.test = true;
-            console.log("animatedModel: ", arr);
-        }
 
         let ctx = this.renderer.getContext();
         ctx.bindTexture(ctx.TEXTURE_2D, this.boneTexture);
@@ -106,7 +100,6 @@ export class AnimatedModel extends Model {
             ctx.TEXTURE_2D, 0, ctx.RGBA, 4,
             this.jointCount, 0, ctx.RGBA, ctx.FLOAT, arr
         );
-
 
         function flattenJointMatrices(joint: Joint) {
             let offset = joint.id * 16;
@@ -118,6 +111,5 @@ export class AnimatedModel extends Model {
                 });
             }
         }
-
     }
 }

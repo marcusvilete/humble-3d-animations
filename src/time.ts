@@ -6,6 +6,5 @@ export class Time {
         now *=  0.001;
         this.deltaTime = now - this.time;
         this.time = now;
-        requestAnimationFrame(Time.computeTime);
     }
 }

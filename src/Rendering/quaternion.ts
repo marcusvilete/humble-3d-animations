@@ -78,9 +78,9 @@ export class Quaternion {
         // this.y = -this.x * q.z + this.y * q.w + this.z * q.x + this.w * q.y;
         // this.z - this.x * q.y - this.y * q.x + this.z * q.w + this.w * q.z;
         // this.w = -this.x * q.x - this.y * q.y - this.z * q.z + this.w * q.w;
-        this.x =  q.x * this.w + q.y * this.z - q.z * this.y + q.w * this.x;
+        this.x = q.x * this.w + q.y * this.z - q.z * this.y + q.w * this.x;
         this.y = -q.x * this.z + q.y * this.w + q.z * this.x + q.w * this.y;
-        this.z =  q.x * this.y - q.y * this.x + q.z * this.w + q.w * this.z;
+        this.z = q.x * this.y - q.y * this.x + q.z * this.w + q.w * this.z;
         this.w = -q.x * this.x - q.y * this.y - q.z * this.z + q.w * this.w;
 
     }
@@ -177,23 +177,56 @@ export class Quaternion {
      * @returns 
      */
     static interpolate(a: Quaternion, b: Quaternion, step: number): Quaternion {
-        let q = new Quaternion(0, 0, 0, 1);
-        //vector-like dot product
-        const dotProduct = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
 
-        if (dotProduct < 0) {
-            q.x = lerp(a.x, -b.x, step);
-            q.y = lerp(a.x, -b.y, step);
-            q.z = lerp(a.x, -b.z, step);
-            q.w = lerp(a.x, -b.w, step);
-        } else {
-            q.x = lerp(a.x, b.x, step);
-            q.y = lerp(a.x, b.y, step);
-            q.z = lerp(a.x, b.z, step);
-            q.w = lerp(a.x, b.w, step);
+        let q = new Quaternion();
+        const cosHalfTheta = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
+        if (Math.abs(cosHalfTheta) >= 1.0) {
+            q.w = a.w;
+            q.x = a.x;
+            q.y = a.y;
+            q.z = a.z;
+            return q;
         }
-        q.normalize();
+
+        const halfTheta = Math.acos(cosHalfTheta);
+        const sinHalfTheta = Math.sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+        // if theta = 180 degrees then result is not fully defined
+        // we could rotate around any axis normal to qa or qb
+        if (Math.abs(sinHalfTheta) < 0.00001) { // fabs is floating point absolute
+            q.w = (a.w * 0.5 + q.w * 0.5);
+            q.x = (a.x * 0.5 + q.x * 0.5);
+            q.y = (a.y * 0.5 + q.y * 0.5);
+            q.z = (a.z * 0.5 + q.z * 0.5);
+            return q;
+        }
+
+        const ratioA = Math.sin((1 - step) * halfTheta) / sinHalfTheta;
+        const ratioB = Math.sin(step * halfTheta) / sinHalfTheta;
+        //calculate Quaternion.
+        q.w = (a.w * ratioA + b.w * ratioB);
+        q.x = (a.x * ratioA + b.x * ratioB);
+        q.y = (a.y * ratioA + b.y * ratioB);
+        q.z = (a.z * ratioA + b.z * ratioB);
         return q;
+
+        // let q = new Quaternion(0, 0, 0, 1);
+        // //vector-like dot product
+
+        // const dotProduct = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
+
+        // if (dotProduct < 0) {
+        //     q.x = lerp(a.x, -b.x, step);
+        //     q.y = lerp(a.x, -b.y, step);
+        //     q.z = lerp(a.x, -b.z, step);
+        //     q.w = lerp(a.x, -b.w, step);
+        // } else {
+        //     q.x = lerp(a.x, b.x, step);
+        //     q.y = lerp(a.x, b.y, step);
+        //     q.z = lerp(a.x, b.z, step);
+        //     q.w = lerp(a.x, b.w, step);
+        // }
+        // q.normalize();
+        // return q;
     }
 
 }

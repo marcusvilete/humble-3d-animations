@@ -6,8 +6,13 @@ import { Transform } from "../transform";
 
 export class FileLoader {
 
+    static getComponentLengthByType() {
+
+    }
+
+
     static async loadGltf(url: string) {
-        //TODO: load bone hierarchy
+        //TODO: load animation data
         let result: GLTFModel = {
             positionData: null,
             normalData: null,
@@ -16,18 +21,13 @@ export class FileLoader {
             jointData: null,
             weightData: null,
             rootJoint: null,
-            jointCount: 0
+            jointCount: 0,
+            animations: []
         };
-        //let positionData: Float32Array;
-        //let normalData: Float32Array;
-        //let texCoordData: Float32Array;
-        //let indicesData: Uint16Array;
-        //let jointData: Float32Array; // top 4 joints that affects the position
-        //let weightData: Float32Array; // respective weight of that joint above
+
         let inverseBindMatricesData: Float32Array;
 
         let gltf = await this.loadJson<GLTFFile>(url);
-
         const baseURL = new URL(url, location.href);
 
         let binaryBuffers = await Promise.all(gltf.buffers.map((buffer) => {
@@ -38,47 +38,27 @@ export class FileLoader {
         //there is just one mesh so far...
         gltf.meshes.forEach((mesh) => {
             mesh.primitives.forEach((primitive) => {
-                //TODO: get rid of all this repetition
                 const positionAccessorIndex = primitive.attributes["POSITION"];
                 const normalAccessorIndex = primitive.attributes["NORMAL"];
                 const texCoordAccessorIndex = primitive.attributes["TEXCOORD_0"];
                 const jointAccessorIndex = primitive.attributes["JOINTS_0"];
                 const weightAccessorIndex = primitive.attributes["WEIGHTS_0"];
-                const indicesIndex = primitive.indices; //uhh
+                const indicesIndex = primitive.indices;
 
-                const positionAccessor = gltf.accessors[positionAccessorIndex];
-                const normalAccessor = gltf.accessors[normalAccessorIndex];
-                const texCoordAccessor = gltf.accessors[texCoordAccessorIndex];
-                const jointAccessor = gltf.accessors[jointAccessorIndex];
-                const weightAccessor = gltf.accessors[weightAccessorIndex];
-                const indicesAccessor = gltf.accessors[indicesIndex];
+                result.positionData = getDataFromAccessors(positionAccessorIndex, gltf, binaryBuffers).data as Float32Array;
+                result.normalData = getDataFromAccessors(normalAccessorIndex, gltf, binaryBuffers).data as Float32Array;
+                result.texCoordData = getDataFromAccessors(texCoordAccessorIndex, gltf, binaryBuffers).data as Float32Array;
+                result.jointData = getDataFromAccessors(jointAccessorIndex, gltf, binaryBuffers).data as Uint8Array;
+                result.weightData = getDataFromAccessors(weightAccessorIndex, gltf, binaryBuffers).data as Float32Array;
+                result.indicesData = getDataFromAccessors(indicesIndex, gltf, binaryBuffers).data as Uint16Array;
 
-                const positionBufferView = gltf.bufferViews[positionAccessor.bufferView];
-                const normalBufferView = gltf.bufferViews[normalAccessor.bufferView];
-                const texCoordBufferView = gltf.bufferViews[texCoordAccessor.bufferView];
-                const jointBufferView = gltf.bufferViews[jointAccessor.bufferView];
-                const weightBufferView = gltf.bufferViews[weightAccessor.bufferView];
-                const indicesBufferView = gltf.bufferViews[indicesAccessor.bufferView];
-
-                const positionBuffer = binaryBuffers[positionBufferView.buffer]; //actual data, finally
-                const normalBuffer = binaryBuffers[normalBufferView.buffer]; //actual data, finally
-                const texCoordBuffer = binaryBuffers[texCoordBufferView.buffer]; //actual data, finally
-                const jointBuffer = binaryBuffers[jointBufferView.buffer]; //actual data, finally
-                const weightBuffer = binaryBuffers[weightBufferView.buffer]; //actual data, finally
-                const indicesBuffer = binaryBuffers[indicesBufferView.buffer]; //actual data, finally
-
-                result.positionData = new Float32Array(positionBuffer, positionBufferView.byteOffset, positionBufferView.byteLength / Float32Array.BYTES_PER_ELEMENT);
-                result.normalData = new Float32Array(normalBuffer, normalBufferView.byteOffset, normalBufferView.byteLength / Float32Array.BYTES_PER_ELEMENT);
-                result.texCoordData = new Float32Array(texCoordBuffer, texCoordBufferView.byteOffset, texCoordBufferView.byteLength / Float32Array.BYTES_PER_ELEMENT);
-                result.jointData = new Uint8Array(jointBuffer, jointBufferView.byteOffset, jointBufferView.byteLength / Uint8Array.BYTES_PER_ELEMENT);
-                result.weightData = new Float32Array(weightBuffer, weightBufferView.byteOffset, weightBufferView.byteLength / Float32Array.BYTES_PER_ELEMENT);
-                result.indicesData = new Uint16Array(indicesBuffer, indicesBufferView.byteOffset, indicesBufferView.byteLength / Uint16Array.BYTES_PER_ELEMENT);//11994);
-                console.log("position", result.positionData);
-                console.log("normals", result.normalData);
-                console.log("tex coords", result.texCoordData);
-                console.log("joint ids", result.jointData);
-                console.log("weights", result.weightData);
-                console.log("indices", result.indicesData);
+                // console.log("position", result.positionData);
+                // console.log("normals", result.normalData);
+                // console.log("tex coords", result.texCoordData);
+                // console.log("joint ids", result.jointData);
+                // console.log("weights", result.weightData);
+                // console.log("indices", result.indicesData);
+                //console.log(gltf);
             });
         });
 
@@ -103,7 +83,7 @@ export class FileLoader {
                 );
             }
 
-            console.log("FileLoader: ", inverseBindMatricesData);
+            //console.log("FileLoader: ", inverseBindMatricesData);
 
             //console.log("inverse bind matrices: ", inverseBindMatrices);
 
@@ -133,7 +113,7 @@ export class FileLoader {
                 //     localMatrix = Matrix4.multiplyMatrices4(scaleMatrix, localMatrix);
                 // }
 
-                let localBindMatrix = Matrix4.makeIdentity();
+                //let localBindMatrix = Matrix4.makeIdentity();
                 let position = new Vector3(0, 0, 0);
                 let rotation = new Vector4(0, 0, 0, 1);
                 let scale = new Vector3(1, 1, 1);
@@ -160,7 +140,7 @@ export class FileLoader {
                 let quat = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
                 let transform = new Transform(position, quat, scale);
 
-                localBindMatrix = Matrix4.compose(position, scale, rotation);
+                //localBindMatrix = Matrix4.compose(position, scale, rotation);
 
                 joints[i] = new Joint(
                     i,
@@ -220,7 +200,108 @@ export class FileLoader {
             //console.log(inverseBindMatricesData);
         });
 
+        function getDataFromAccessors(accessorIndex: number, file: GLTFFile, buffers: ArrayBuffer[]) {
 
+            const accessor = file.accessors[accessorIndex];
+            const bufferView = file.bufferViews[accessor.bufferView];
+            const buffer = buffers[bufferView.buffer];
+            const data = getTypedArray(buffer, bufferView.byteOffset, bufferView.byteLength, accessor.componentType);
+
+            return {
+                max: accessor.max,
+                min: accessor.min,
+                type: accessor.type,
+                data: data
+            };
+
+        }
+        function getTypedArray(buffer: ArrayBuffer, byteOffset: number, byteLength: number, type: ArrayType) {
+            switch (type) {
+                case ArrayType.FLOAT:
+                    return new Float32Array(buffer, byteOffset, byteLength / Float32Array.BYTES_PER_ELEMENT);
+                case ArrayType.SHORT:
+                    return new Int16Array(buffer, byteOffset, byteLength / Int16Array.BYTES_PER_ELEMENT);
+                case ArrayType.UNSIGNED_BYTE:
+                    return new Uint8Array(buffer, byteOffset, byteLength / Uint8Array.BYTES_PER_ELEMENT);
+                case ArrayType.UNSIGNED_INTEGER:
+                    return new Uint32Array(buffer, byteOffset, byteLength / Uint32Array.BYTES_PER_ELEMENT);
+                case ArrayType.UNSIGNED_SHORT:
+                    return new Uint16Array(buffer, byteOffset, byteLength / Uint16Array.BYTES_PER_ELEMENT);
+                default:
+                    console.error("ComponentType not found: ", type);
+                    return null;
+            }
+        }
+
+
+        //now the animations:
+        //for each animation
+        //  - get name, if there is no name we call it something like anim1
+        //  - iterate through channels of the animation
+        //  - select the respective sampler
+        //  - load timestamps from input, values from output using 'getDataFromAccessors' and the interpolation method
+        //  - save which node/joint to animate and which 'path'(translation, rotation, scale)
+
+
+
+        gltf.animations.forEach((animation, i) => {
+            let maxLength = 0;
+            let animationData: SkeletonAnimationData = {} as SkeletonAnimationData;
+
+            animationData.animationName = animation.name ? animation.name : "anim" + i;
+
+
+            let jointAnimationsByName: { [key: string]: JointAnimationData } = {};
+
+            animation.channels.forEach((channel, j) => {
+                let sampler = animation.samplers[channel.sampler];
+                let inputData = getDataFromAccessors(sampler.input, gltf, binaryBuffers);
+                let outputData = getDataFromAccessors(sampler.output, gltf, binaryBuffers);
+                let node = gltf.nodes[channel.target.node];
+
+                let jointName = node.name ? node.name : "joint" + j;
+                //add to dictionary, if it is not already
+                if (!jointAnimationsByName[jointName]) {
+                    jointAnimationsByName[jointName] = { jointName: jointName } as JointAnimationData;
+                }
+
+                let jointAnimData = jointAnimationsByName[jointName];
+
+                let samples: AnimationSampleData[] = [];
+
+                inputData.data.forEach((timestamp, timestampIndex) => {
+                    timestamp *= 2; //debug
+                    let componentLen = ComponentType[outputData.type as keyof typeof ComponentType];
+                    let len = timestampIndex * componentLen;
+                    maxLength = Math.max(maxLength, timestamp);
+
+                    samples.push({ timestamp: timestamp, values: Array.from(outputData.data.slice(len, len + componentLen)) });
+                });
+
+                //TODO: replace this with something like:
+                //jointAnimData.[path] = {interpolationMethod: sampler.interpolation, samples};
+                switch (channel.target.path.toLowerCase()) {
+                    case "translation":
+                        jointAnimData.translation = { interpolationMethod: sampler.interpolation, samples };
+                        break;
+                    case "rotation":
+                        jointAnimData.rotation = { interpolationMethod: sampler.interpolation, samples };
+                        break;
+                    case "scale":
+                        jointAnimData.scale = { interpolationMethod: sampler.interpolation, samples };
+                        break;
+                    default:
+                        console.error("path not implemented: ", channel.target.path);
+                        break;
+                }
+
+            });
+            animationData.jointsAnimations = Object.values(jointAnimationsByName);
+            animationData.animationLength = maxLength;
+            result.animations.push(animationData);
+
+        });
+        console.log(result.animations);
 
         return result;
 
@@ -253,6 +334,7 @@ export class FileLoader {
         const response = await fetch(url);
         return response.arrayBuffer();
     }
+
 }
 
 
@@ -312,18 +394,90 @@ interface GLTFFile {
     nodes: GLTFNode[];
     skins: GLTFSkin[];
     meshes: GLTFMesh[];
+    animations: GLTFAnimation[];
     buffers: GLTFBuffer[];
     accessors: GLTFAccessor[];
     bufferViews: GLTFBufferView[];
 }
 
-interface GLTFModel {
-    positionData: Float32Array,
-    normalData: Float32Array,
-    texCoordData: Float32Array,
-    indicesData: Uint16Array,
-    jointData: Uint8Array,
-    weightData: Float32Array,
-    rootJoint: Joint,
-    jointCount: number
+interface GLTFAnimation {
+    name: string;
+    channels: GLTFAnimationChannel[];
+    samplers: GLTFAnimationSampler[];
+
+}
+
+interface GLTFAnimationChannel {
+    sampler: number;
+    target: GLTFAnimationTarget;
+}
+
+interface GLTFAnimationTarget {
+    node: number;
+    path: string;
+}
+
+interface GLTFAnimationSampler {
+    input: number;
+    interpolation: string;
+    output: number;
+}
+
+//Output struct
+export interface GLTFModel {
+    positionData: Float32Array;
+    normalData: Float32Array;
+    texCoordData: Float32Array;
+    indicesData: Uint16Array;
+    jointData: Uint8Array;
+    weightData: Float32Array;
+    rootJoint: Joint;
+    jointCount: number;
+    animations: SkeletonAnimationData[];
+}
+
+//output struct
+export interface SkeletonAnimationData {
+    animationLength: number;
+    animationName: string;
+    jointsAnimations: JointAnimationData[];
+}
+
+//output struct
+export interface JointAnimationData {
+    jointName: string;
+    rotation: AnimationData;
+    scale: AnimationData;
+    translation: AnimationData;
+}
+
+//output struct
+export interface AnimationData {
+    interpolationMethod: string;
+    samples: AnimationSampleData[];
+}
+//output struct
+export interface AnimationSampleData {
+    timestamp: number; //in GLTF, time is in seconds
+    values: number[]; //flattened values, if scale or translation its 3 components, if rotation its 4(quaternion)
+}
+
+enum ArrayType {
+    BYTE = 5120,
+    UNSIGNED_BYTE = 5121,
+    SHORT = 5122,
+    UNSIGNED_SHORT = 5123,
+    UNSIGNED_INTEGER = 5125,
+    FLOAT = 5126
+}
+
+enum ComponentType {
+    SCALAR = 1,
+    VEC2 = 2,
+    VEC3 = 3,
+    VEC4 = 4,
+    MAT2 = 4,
+    MAT3 = 9,
+    MAT4 = 16,
+
 }
