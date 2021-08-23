@@ -1,6 +1,6 @@
 import { Matrix4 } from "../Rendering/matrix";
 import { BaseNode } from "../Rendering/node";
-import { Transform } from "../transform";
+import { Transform } from "../Rendering/transform";
 
 export class Joint extends BaseNode {
     id: number;

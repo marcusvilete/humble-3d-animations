@@ -1,4 +1,4 @@
-import { Transform } from "../transform";
+import { Transform } from "./transform";
 import { Camera } from "./camera";
 import { BaseNode } from "./node";
 import { Renderer } from "./renderer";

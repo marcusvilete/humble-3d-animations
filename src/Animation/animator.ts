@@ -3,9 +3,8 @@ import { HumbleAnimation } from "./animation";
 import { Joint } from "./joint";
 import { JointTransform } from "./JointTransform";
 import { HumbleKeyframe, Pose } from "./keyframe";
-import { degToRad } from "../Etc/mathFunctions";
 import { AnimatedModel } from "./animatedModel";
-import { Time } from "../time";
+import { Time } from "../Etc/time";
 
 export class Animator {
     animation: HumbleAnimation;
@@ -25,8 +24,9 @@ export class Animator {
         if (this.animation) {
             this.increaseAnimationTime(Time.deltaTime);
             let currentPose = this.computeCurrentAnimationPose();
-            //this.applyPoseToJoints(currentPose, this.model.rootJoint, Matrix4.makeIdentity());
             this.applyPoseToJoints(currentPose, this.model.rootJoint, this.model.transform.getWorldMatrix());
+        } else {
+            this.applyPoseToJoints(null, this.model.rootJoint, this.model.transform.getWorldMatrix());
         }
     }
 
@@ -45,14 +45,23 @@ export class Animator {
     }
 
     applyPoseToJoints(currentPose: Pose, joint: Joint, parentMatrix: Matrix4): void {
-        let currentTransform = currentPose[joint.name];
-        let currentMatrix = Matrix4.multiplyMatrices4(currentTransform.getLocalMatrix(), parentMatrix);
+        //TODO: comeback here some day!
+        if (currentPose) {
+            let currentTransform = currentPose[joint.name];
+            let currentMatrix = Matrix4.multiplyMatrices4(currentTransform.getLocalMatrix(), parentMatrix);
 
-        joint.children.forEach(child => {
-            this.applyPoseToJoints(currentPose, child as Joint, currentMatrix);
-        });
+            joint.children.forEach(child => {
+                this.applyPoseToJoints(currentPose, child as Joint, currentMatrix);
+            });
 
-        joint.animatedMatrix = Matrix4.multiplyMatrices4(joint.inverseBindMatrix, currentMatrix);
+            joint.animatedMatrix = Matrix4.multiplyMatrices4(joint.inverseBindMatrix, currentMatrix);
+        } else {
+            let currentMatrix = Matrix4.multiplyMatrices4(joint.transform.getLocalMatrix(), parentMatrix);
+            joint.children.forEach(child => {
+                this.applyPoseToJoints(null, child as Joint, currentMatrix);
+            });
+            joint.animatedMatrix = Matrix4.multiplyMatrices4(joint.inverseBindMatrix, currentMatrix);
+        }
     }
 
     getPreviousAndNextFrames(): [HumbleKeyframe, HumbleKeyframe] {

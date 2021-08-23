@@ -1,6 +1,5 @@
-import { Transform } from "../transform";
+import { Transform } from "./transform";
 import { Matrix4 } from "./matrix";
-
 
 //TODO: this camera class can only represent a perspective camera...
 //      make so we can represent other types(like ortho?) of cameras...

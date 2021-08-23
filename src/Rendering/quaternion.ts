@@ -1,6 +1,4 @@
-import { lerp } from "../Etc/mathFunctions";
 import { Matrix4 } from "./matrix";
-import { Vector3, Vector4 } from "./vector";
 
 //Quaternions are a way to represent rotation (among other transformations)
 //for future reference: 
@@ -58,30 +56,25 @@ export class Quaternion {
         const s1s2 = s1 * s2;
 
         let q = new Quaternion(
-            c1c2 * s3 + s1s2 * c3,
-            s1 * c2 * c3 + c1 * s2 * s3,
-            c1 * s2 * c3 - s1 * c2 * s3,
-            c1c2 * c3 - s1s2 * s3
+            c1c2 * s3 + s1s2 * c3, //x
+            s1 * c2 * c3 + c1 * s2 * s3, //y
+            c1 * s2 * c3 - s1 * c2 * s3, //z
+            c1c2 * c3 - s1s2 * s3 //w
         );
 
         this.multiply(q);
-
-
-        // this.w = c1c2 * c3 - s1s2 * s3;
-        // this.x = c1c2 * s3 + s1s2 * c3;
-        // this.y = s1 * c2 * c3 + c1 * s2 * s3;
-        // this.z = c1 * s2 * c3 - s1 * c2 * s3;
     }
 
     multiply(q: Quaternion) {
-        // this.x = this.x * q.w + this.y * q.z - this.z * q.y + this.w * q.x;
-        // this.y = -this.x * q.z + this.y * q.w + this.z * q.x + this.w * q.y;
-        // this.z - this.x * q.y - this.y * q.x + this.z * q.w + this.w * q.z;
-        // this.w = -this.x * q.x - this.y * q.y - this.z * q.z + this.w * q.w;
-        this.x = q.x * this.w + q.y * this.z - q.z * this.y + q.w * this.x;
-        this.y = -q.x * this.z + q.y * this.w + q.z * this.x + q.w * this.y;
-        this.z = q.x * this.y - q.y * this.x + q.z * this.w + q.w * this.z;
-        this.w = -q.x * this.x - q.y * this.y - q.z * this.z + q.w * this.w;
+        let x = q.x * this.w + q.y * this.z - q.z * this.y + q.w * this.x;
+        let y = -q.x * this.z + q.y * this.w + q.z * this.x + q.w * this.y;
+        let z = q.x * this.y - q.y * this.x + q.z * this.w + q.w * this.z;
+        let w = -q.x * this.x - q.y * this.y - q.z * this.z + q.w * this.w;
+
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
 
     }
     /**
@@ -113,13 +106,7 @@ export class Quaternion {
         tmp2 = this.x * this.w;
         let m21 = 2.0 * (tmp1 + tmp2);
         let m12 = 2.0 * (tmp1 - tmp2);
-
-        // return new Matrix4(
-        //     m00, m01, m02, 0,
-        //     m10, m11, m12, 0,
-        //     m20, m21, m22, 0,
-        //     0, 0, 0, 1
-        // );
+       
         return new Matrix4(
             m00, m10, m20, 0,
             m01, m11, m21, 0,
@@ -208,25 +195,5 @@ export class Quaternion {
         q.y = (a.y * ratioA + b.y * ratioB);
         q.z = (a.z * ratioA + b.z * ratioB);
         return q;
-
-        // let q = new Quaternion(0, 0, 0, 1);
-        // //vector-like dot product
-
-        // const dotProduct = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
-
-        // if (dotProduct < 0) {
-        //     q.x = lerp(a.x, -b.x, step);
-        //     q.y = lerp(a.x, -b.y, step);
-        //     q.z = lerp(a.x, -b.z, step);
-        //     q.w = lerp(a.x, -b.w, step);
-        // } else {
-        //     q.x = lerp(a.x, b.x, step);
-        //     q.y = lerp(a.x, b.y, step);
-        //     q.z = lerp(a.x, b.z, step);
-        //     q.w = lerp(a.x, b.w, step);
-        // }
-        // q.normalize();
-        // return q;
     }
-
 }

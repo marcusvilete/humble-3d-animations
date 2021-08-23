@@ -38,6 +38,7 @@ export class AnimatedRenderer extends BaseRenderer {
         this.jointCountLocation = context.getUniformLocation(program, "u_numJoints");
     }
 
+    //TODO: move this out
     loadTexture(img: HTMLImageElement): WebGLTexture {
         let texture = this.context.createTexture();
         this.context.bindTexture(this.context.TEXTURE_2D, texture);
@@ -55,7 +56,8 @@ export class AnimatedRenderer extends BaseRenderer {
         return texture;
     }
 
-    loadTexture2(color: Vector4) {
+    //TODO: move this out
+    loadTexture2(color: Vector4) { 
         let texture = this.context.createTexture();
         this.context.bindTexture(this.context.TEXTURE_2D, texture);
 
@@ -73,6 +75,7 @@ export class AnimatedRenderer extends BaseRenderer {
         return texture;
     }
 
+    //TODO: move this out
     clear() {
         this.context.clearColor(0.5, 0.5, 0.5, 1);
         this.context.clear(this.context.COLOR_BUFFER_BIT | this.context.DEPTH_BUFFER_BIT);

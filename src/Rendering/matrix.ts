@@ -1,3 +1,4 @@
+import { Quaternion } from "./quaternion";
 import { Vector3, Vector4 } from "./vector"
 
 //remember webGL is right-handed
@@ -410,23 +411,114 @@ export class Matrix4 {
         result.elements[1] = (xy + wz) * scale.x;
         result.elements[2] = (xz - wy) * scale.x;
         result.elements[3] = 0;
-    
+
         result.elements[4] = (xy - wz) * scale.y;
         result.elements[5] = (1 - (xx + zz)) * scale.y;
         result.elements[6] = (yz + wx) * scale.y;
         result.elements[7] = 0;
-    
+
         result.elements[8] = (xz + wy) * scale.z;
         result.elements[9] = (yz - wx) * scale.z;
         result.elements[10] = (1 - (xx + yy)) * scale.z;
         result.elements[11] = 0;
-    
+
         result.elements[12] = translation.x;
         result.elements[13] = translation.y;
         result.elements[14] = translation.z;
         result.elements[15] = 1;
-        
+
         return result;
     }
-    
+    static decompose(m: Matrix4): [translation: Vector3, rotation: Quaternion, scale: Vector3] {
+        let translation = new Vector3();
+        let rotation = new Quaternion();
+        let scale = new Vector3();
+
+        let sliceX = m.elements.slice(0, 3);
+        let sliceY = m.elements.slice(4, 7);
+        let sliceZ = m.elements.slice(8, 11);
+
+        let sx = Vector3.magnitude(new Vector3(sliceX[0], sliceX[1], sliceX[2]));
+        const sy = Vector3.magnitude(new Vector3(sliceY[0], sliceY[1], sliceY[2]));
+        const sz = Vector3.magnitude(new Vector3(sliceZ[0], sliceZ[1], sliceZ[2]));
+
+        // if determinate is negative, we need to invert one scale
+        const det = this.determinate(m);
+        if (det < 0) {
+            sx = -sx;
+        }
+
+        translation.x = m.elements[12];
+        translation.y = m.elements[13];
+        translation.z = m.elements[14];
+
+        // scale the rotation part
+        const matrix = Matrix4.copy(m);
+
+        const invSX = 1 / sx;
+        const invSY = 1 / sy;
+        const invSZ = 1 / sz;
+
+        matrix.elements[0] *= invSX;
+        matrix.elements[1] *= invSX;
+        matrix.elements[2] *= invSX;
+
+        matrix.elements[4] *= invSY;
+        matrix.elements[5] *= invSY;
+        matrix.elements[6] *= invSY;
+
+        matrix.elements[8] *= invSZ;
+        matrix.elements[9] *= invSZ;
+        matrix.elements[10] *= invSZ;
+
+        rotation = Quaternion.fromMatrix4(matrix);
+
+        scale.x = sx;
+        scale.y = sy;
+        scale.z = sz;
+
+        return [translation, rotation, scale];
+    }
+
+    static determinate(m: Matrix4) {
+        let m00 = m.getElementAt(0, 0);
+        let m01 = m.getElementAt(1, 0);
+        let m02 = m.getElementAt(2, 0);
+        let m03 = m.getElementAt(3, 0);
+        let m10 = m.getElementAt(0, 1);
+        let m11 = m.getElementAt(1, 1);
+        let m12 = m.getElementAt(2, 1);
+        let m13 = m.getElementAt(3, 1);
+        let m20 = m.getElementAt(0, 2);
+        let m21 = m.getElementAt(1, 2);
+        let m22 = m.getElementAt(2, 2);
+        let m23 = m.getElementAt(3, 2);
+        let m30 = m.getElementAt(0, 3);
+        let m31 = m.getElementAt(1, 3);
+        let m32 = m.getElementAt(2, 3);
+        let m33 = m.getElementAt(3, 3);
+        let tmp_0 = m22 * m33;
+        let tmp_1 = m32 * m23;
+        let tmp_2 = m12 * m33;
+        let tmp_3 = m32 * m13;
+        let tmp_4 = m12 * m23;
+        let tmp_5 = m22 * m13;
+        let tmp_6 = m02 * m33;
+        let tmp_7 = m32 * m03;
+        let tmp_8 = m02 * m23;
+        let tmp_9 = m22 * m03;
+        let tmp_10 = m02 * m13;
+        let tmp_11 = m12 * m03;
+
+        let t0 = (tmp_0 * m11 + tmp_3 * m21 + tmp_4 * m31) -
+            (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
+        let t1 = (tmp_1 * m01 + tmp_6 * m21 + tmp_9 * m31) -
+            (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
+        let t2 = (tmp_2 * m01 + tmp_7 * m11 + tmp_10 * m31) -
+            (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
+        let t3 = (tmp_5 * m01 + tmp_8 * m11 + tmp_11 * m21) -
+            (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+
+        return 1.0 / (m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3);
+    }
 }

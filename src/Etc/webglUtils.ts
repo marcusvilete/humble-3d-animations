@@ -8,7 +8,6 @@ export class webglUtils {
             console.error("Something went wrong when compiling a vertex shader. More info:", gl.getShaderInfoLog(shader));
             return;
         }
-
         return shader;
     }
 

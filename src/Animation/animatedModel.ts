@@ -1,7 +1,5 @@
-import { Matrix4 } from "../Rendering/matrix";
 import { Model } from "../Rendering/model";
 import { Renderer } from "../Rendering/renderer";
-import { Time } from "../time";
 import { HumbleAnimation } from "./animation";
 import { Animator } from "./animator";
 import { Joint } from "./joint";
@@ -56,9 +54,7 @@ export class AnimatedModel extends Model {
         ctx.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
         ctx.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
 
-        if (rootJoint) {
-            rootJoint.setParent(this);
-        }
+        rootJoint.updateTransforms();
         this.animator = new Animator(this);
     }
 
@@ -69,26 +65,6 @@ export class AnimatedModel extends Model {
     update(): void {
 
         this.animator.update();
-
-        // let xrotation = Matrix4.makeXRotation(Math.sin(Time.time) * .5);
-
-        // animateJoints(this.rootJoint, this.transform.getWorldMatrix());
-        // function animateJoints(joint: Joint, parent: Matrix4) {
-
-        //     let worldBindMatrix = Matrix4.multiplyMatrices4(joint.transform.getLocalMatrix(), parent);
-        //     //let worldBindMatrix = joint.transform.getWorldMatrix();
-        //     worldBindMatrix = Matrix4.multiplyMatrices4(xrotation, worldBindMatrix);
-
-        //     joint.animatedMatrix = Matrix4.makeIdentity();
-        //     joint.animatedMatrix = Matrix4.multiplyMatrices4(worldBindMatrix, joint.animatedMatrix);
-        //     joint.animatedMatrix = Matrix4.multiplyMatrices4(joint.inverseBindMatrix, joint.animatedMatrix);
-
-        //     if (joint.children) {
-        //         joint.children.forEach(child => {
-        //             animateJoints(child as Joint, worldBindMatrix);
-        //         });
-        //     }
-        // }
 
         let arr = new Float32Array(this.jointCount * 16);
         flattenJointMatrices(this.rootJoint);

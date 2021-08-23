@@ -1,6 +1,6 @@
 import { AnimationSampleData, SkeletonAnimationData } from "../File/fileLoader";
 import { Quaternion } from "../Rendering/quaternion";
-import { Vector2, Vector3, Vector4 } from "../Rendering/vector";
+import { Vector3, Vector4 } from "../Rendering/vector";
 import { JointTransform } from "./JointTransform";
 import { HumbleKeyframe, Pose } from "./keyframe";
 
@@ -27,16 +27,6 @@ export class HumbleAnimation { //name Animation was taken =(
 
         let keyframes: HumbleKeyframe[] = [];
 
-        //timestamp
-        //Pose
-        //new HumbleKeyFrame(timestamp, Pose)
-        //let pose:Pose
-        //let p: Pose = {};
-        //p["JointName"] = new JointTransform(null, null, null);
-
-        anim.jointsAnimations[0].jointName
-
-
         //build a timestamp array
         let samples: AnimationSampleData[];
         if (anim.jointsAnimations[0].translation.samples) {
@@ -51,13 +41,10 @@ export class HumbleAnimation { //name Animation was taken =(
             return s.timestamp;
         });
 
-
-        //p["JointName"] = new JointTransform(null, null, null);
         //for each timestamp, lets build a Pose (which is a dictionary of <jointName, JointTransform> )
         timestamps.forEach((t, i) => {
             let p: Pose = {};
             anim.jointsAnimations.forEach((jointAnimation) => {
-                //jointAnimation.jointName
                 let position = new Vector3(jointAnimation.translation.samples[i].values[0], jointAnimation.translation.samples[i].values[1], jointAnimation.translation.samples[i].values[2]);
                 let rotation = new Quaternion(jointAnimation.rotation.samples[i].values[0], jointAnimation.rotation.samples[i].values[1], jointAnimation.rotation.samples[i].values[2], jointAnimation.rotation.samples[i].values[3]);
                 let scale = new Vector3(jointAnimation.scale.samples[i].values[0], jointAnimation.scale.samples[i].values[1], jointAnimation.scale.samples[i].values[2]);
@@ -65,9 +52,6 @@ export class HumbleAnimation { //name Animation was taken =(
             });
             keyframes.push(new HumbleKeyframe(t, p));
         });
-
-        console.log("HumbleAnimation", name, keyframes, lengthInSeconds);
-
         return new HumbleAnimation(name, keyframes, lengthInSeconds);
     }
 }

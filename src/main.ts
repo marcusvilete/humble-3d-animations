@@ -6,18 +6,25 @@ import { webglUtils } from "./Etc/webglUtils";
 import { FileLoader } from "./File/fileLoader";
 import { Camera } from "./Rendering/camera";
 import { Scene } from "./Rendering/scene";
-import { StaticModel } from "./Rendering/staticModel";
 import { StaticRenderer } from "./Rendering/staticRenderer";
 import { Vector3, Vector4 } from "./Rendering/vector";
-import { Time } from "./time";
+import { Time } from "./Etc/time";
+
+window.onload = main;
+
+let scene: Scene;
+let theModel: AnimatedModel;
+let staticRenderer: StaticRenderer;
+let animatedRenderer: AnimatedRenderer;
+let animations: { [index: string]: HumbleAnimation } = {};
 
 // stuff related to camera and camera movement
 let firsPersonCamera = {
     cameraObj: null as Camera,
-    forwardVelocity: new Vector3(0, 0, 0),
-    rightVelocity: new Vector3(0, 0, 0),
-    maxXRotation: degToRad(88),
-    minXRotation: degToRad(-88),
+    forwardVelocity: new Vector3(),
+    rightVelocity: new Vector3(),
+    maxXRotation: degToRad(89),
+    minXRotation: degToRad(-89),
     currentRotationAngles: new Vector3(),
     cameraSpeed: 20,
     mouseSensibility: 0.1,
@@ -34,23 +41,13 @@ let firsPersonCamera = {
         let cam = this.cameraObj as Camera;
         let speed = this.mouseSensibility * Time.deltaTime;
 
-        let before = new Vector3(
-            this.currentRotationAngles.x,
-            this.currentRotationAngles.y,
-            0
-        );
-
         this.currentRotationAngles.x -= speed * rotationAmount.x;
         this.currentRotationAngles.y -= speed * rotationAmount.y;
 
         if (this.currentRotationAngles.x > this.maxXRotation) this.currentRotationAngles.x = this.maxXRotation;
         else if (this.currentRotationAngles.x < this.minXRotation) this.currentRotationAngles.x = this.minXRotation;
 
-        //let rotation = Vector3.subtract(this.currentRotationAngles, before);
-        //rotation.x *= cam.transform.right.x < 0 ? -1 : 1;
-        //rotation.y *= cam.transform.up.y;
         cam.transform.setRotation(this.currentRotationAngles);
-        //cam.transform.rotate(rotation);
     }
 };
 
@@ -65,57 +62,31 @@ let controls = {
     right: false
 }
 
-/**
- * Time since last frame, in seconds
- */
-//let deltaTime = 0;
-//let previousFrameTime = 0;
+//html elements
+let viewElements = {
+    loadingState: document.querySelector("#loading-state") as HTMLInputElement,
+    loadedState: document.querySelector("#loaded-state") as HTMLInputElement,
+    xRotationElement: document.querySelector("#x-rotation") as HTMLInputElement,
+    yRotationElement: document.querySelector("#y-rotation") as HTMLInputElement,
+    zRotationElement: document.querySelector("#z-rotation") as HTMLInputElement,
+    animationSelect: document.querySelector("#select-animations") as HTMLInputElement
+}
 
-//vars for counting frames
-let frameCount = 0;
-let timeForFPS = 0;
-
-let staticRenderer: StaticRenderer;
-let animatedRenderer: AnimatedRenderer;
-
-//array of game objects
-//let rootGameObject = new GameObject();
-//let gameObjects = new Array<GameObject>();
-let models = new Array<StaticModel>();
-let scene: Scene;
-
-window.onload = main;
 function main(): void {
-    FileLoader.loadGltf("./assets/whale.CYCLES.gltf").then((gltfModel) => {
-        setup();
-        scene = new Scene(
-            firsPersonCamera.cameraObj,
-            Vector3.normalize(new Vector3(0.5, 0.7, 1)),
-            []
-        );
+    //for debugging
+    window.onerror = function myErrorHandler(errorMsg, url, lineNumber) {
+        alert("Error occured: " + errorMsg);//or any message
+        return false;
+    }
+    showLoadingState();
+    setup();
+    loadResources().then((gltfModel) => {
+        //there is no texture, so...
+        //1-pixel-1-color-texture mockup
         let texture = animatedRenderer.loadTexture2(new Vector4(0, 0, 255, 255));
-        //renderer.bufferData2();
-        let model = new StaticModel(
-            gltfModel.positionData,
-            gltfModel.normalData,
-            gltfModel.texCoordData,
-            gltfModel.indicesData,
-            staticRenderer
-        );
 
-
-        model.transform.position = new Vector3(3, 5, 0);
-        model.transform.scale = new Vector3(0.4347, 0.4347, 0.4347);
-        model.transform.rotate(new Vector3(degToRad(90), 0, 0));
-        model.texture = texture;
-        //models.push(model);
-        //scene.rootNodes.push(model);
-
-        model.update = () => {
-            //model.transform.rotate(new Vector3(Time.deltaTime * degToRad(90), 0, 0));
-        };
-
-        let model2 = new AnimatedModel(
+        //instantiate the model
+        theModel = new AnimatedModel(
             gltfModel.positionData,
             gltfModel.normalData,
             gltfModel.texCoordData,
@@ -125,46 +96,32 @@ function main(): void {
             gltfModel.rootJoint,
             gltfModel.jointCount,
             animatedRenderer);
-        
-        model2.transform.rotate(new Vector3(degToRad(85), 0, 0));
-        model2.transform.translate(new Vector3(0, 0, -10));
+        theModel.texture = texture;
 
+        //add to scene
+        scene.rootNodes.push(theModel);
+        scene.renderables.push(theModel);
+        setupStaticModel();
 
+        //save animations into a dictionary so we can pick in HTML
+        gltfModel.animations.forEach(anim => {
+            animations[anim.animationName] = HumbleAnimation.fromGLTFAnimation(anim);
+        });
 
-        let animAttack = HumbleAnimation.fromGLTFAnimation(gltfModel.animations[0]);
-        let animSwim = HumbleAnimation.fromGLTFAnimation(gltfModel.animations[1]);
-
-        model2.doAnimation(animAttack);
-
-
-        
-        model2.texture = texture;
-        models.push(model2);
-        scene.rootNodes.push(model2);
+        buildAnimationOptions(Object.keys(animations));
         createEventHandlers();
         requestAnimationFrame(gameLoop);
+        showLoadedState();
     });
-
-
-    // //first of all, load resources!
-    // loadResources().then(() => {
-    //     setup();
-    //     instantiateObjects();
-    //     renderer.bufferData(gameObjects); // This should be called everytime we add or remove meshes to the scene
-    //     createEventHandlers();
-    //     requestAnimationFrame(gameLoop);
-    // });
-
 }
 
 function setup(): void {
     let canvasElem: HTMLCanvasElement = document.querySelector("#canvas");
-    let vertexShaderElemStatic: HTMLScriptElement = document.querySelector("#vertex-shader-3d-textured-lit2");
-    let fragmentShaderElemStatic: HTMLScriptElement = document.querySelector("#fragment-shader-3d-textured-lit2");
+    let vertexShaderElemStatic: HTMLScriptElement = document.querySelector("#vertex-shader-3d-textured-lit");
+    let fragmentShaderElemStatic: HTMLScriptElement = document.querySelector("#fragment-shader-3d-textured-lit");
 
     let vertexShaderElemAnimated: HTMLScriptElement = document.querySelector("#vertex-shader-3d-textured-skinned");
     let fragmentShaderElemAnimated: HTMLScriptElement = document.querySelector("#fragment-shader-3d-textured-skinned");
-
 
     //initialize canvas and webgl stuff
     let gl = canvasElem.getContext("webgl");
@@ -172,19 +129,20 @@ function setup(): void {
         console.error("Something went wrong while creating webgl context");
         return;
     }
-    gl.getExtension('OES_texture_float');
+    let ext = gl.getExtension('OES_texture_float');
+    if (!ext) {
+        throw new Error("Could not run in your browser, sorry! More info: OES_texture_float extension missing!");
+    }
 
     let vertexShader = webglUtils.loadFromScript(gl, vertexShaderElemStatic, gl.VERTEX_SHADER);
     let fragmentShader = webglUtils.loadFromScript(gl, fragmentShaderElemStatic, gl.FRAGMENT_SHADER);
     let program = webglUtils.createProgram(gl, vertexShader, fragmentShader);
-
     staticRenderer = new StaticRenderer(gl, program);
 
     vertexShader = webglUtils.loadFromScript(gl, vertexShaderElemAnimated, gl.VERTEX_SHADER);
     fragmentShader = webglUtils.loadFromScript(gl, fragmentShaderElemAnimated, gl.FRAGMENT_SHADER);
     program = webglUtils.createProgram(gl, vertexShader, fragmentShader);
     animatedRenderer = new AnimatedRenderer(gl, program);
-
 
     const aspect = canvasElem.clientWidth / canvasElem.clientHeight;
     let yFov = degToRad(60); //To radians;
@@ -198,27 +156,19 @@ function setup(): void {
         zFar
     );
     firsPersonCamera.cameraObj.computePerspectiveMatrix();
-}
+    firsPersonCamera.cameraObj.transform.position = new Vector3(-4.5, 0, -2);
+    firsPersonCamera.cameraObj.transform.setRotation(new Vector3(degToRad(0), degToRad(-45), degToRad(0)));
+    firsPersonCamera.currentRotationAngles = new Vector3(degToRad(0), degToRad(-45), degToRad(0));
 
-async function loadResources() {
-    //we load everything we need to start rendering here....
-    //let allstarImagePromise = FileLoader.loadImage("./assets/allstar.png");
-    //let allstarMeshesPromise = FileLoader.loadOBJ("./assets/allstar.obj");
-    //let promises: Promise<any>[] = [allstarImagePromise, allstarMeshesPromise];
-
-    //resume only when everything is ready....
-    //await Promise.all(promises).then((values) => {
-    //allstarImage = values[0];
-    //allstarMeshes = values[1];
-    //});
+    scene = new Scene(
+        firsPersonCamera.cameraObj,
+        Vector3.normalize(new Vector3(0.5, 0.7, 1)),
+        []
+    );
 }
 
 function gameLoop(now: number): void {
-    //now *= 0.001;
-    //deltaTime = now - previousFrameTime;
-    //previousFrameTime = now;
     Time.computeTime(now);
-    //computeFramesPerSecond();
     processInput();
     update();
     render();
@@ -226,7 +176,6 @@ function gameLoop(now: number): void {
 }
 
 function processInput() {
-
     let direction = new Vector3();
     if (controls.up) direction = Vector3.add(direction, Vector3.forward);
     if (controls.down) direction = Vector3.add(direction, Vector3.backward);
@@ -236,26 +185,41 @@ function processInput() {
     firsPersonCamera.Move(direction);
 }
 
-
 function update(): void {
-
     scene.update();
-
-    // models.forEach(model => {
-    //     model.update(deltaTime, previousFrameTime);
-    //     //model.transform.translate(new Vector3(1 * deltaTime, 0, 0));
-    // });
 }
 
 function render(): void {
     animatedRenderer.clear();
     scene.render();
-    // models.forEach(model => {
-    //     model.render(Camera.getActiveCamera());
-    // });
+}
+
+async function loadResources() {
+    // return FileLoader.loadGltf("./assets/mannequinnWalking.gltf", 0);
+    return FileLoader.loadGltf("./assets/whale.CYCLES.gltf", 0);
+
+    //TODO: when we need more resources, add them here...
+    // when all resources finish loading, then we proceed
+
+    //Something like:
+    //we load everything we need to start rendering here....
+    //let resource01 = FileLoader.loadImage("./assets/someImage1.png");
+    //let resource02 = FileLoader.loadImage("./assets/someImage2.png");
+    //let resource03 = FileLoader.loadGltf("./assets/someScene.gltf");
+    //let promises: Promise<any>[] = [resource01, resource02, resource03];
+    //await Promise.all(promises).then((values) => { ... });
 }
 
 function createEventHandlers(): void {
+    viewElements.animationSelect.addEventListener("change", function (this: HTMLInputElement, event: InputEvent) {
+        if (animations[this.value]) {
+            setupAnimatedModel();
+            theModel.doAnimation(animations[this.value]);
+        } else {
+            setupStaticModel();
+        }
+    });
+
     document.addEventListener("keydown", function (event: KeyboardEvent) {
         if (event.key === 'w') {
             controls.up = true;
@@ -269,6 +233,7 @@ function createEventHandlers(): void {
             //console.log(controls);
         }
     });
+    
     document.addEventListener("keyup", function (event: KeyboardEvent) {
         if (event.key === 'w') {
             controls.up = false;
@@ -311,13 +276,38 @@ function createEventHandlers(): void {
     }
 }
 
-function computeFramesPerSecond() {
-    frameCount++;
-    timeForFPS += Time.deltaTime;
-    if (timeForFPS >= 1.0) {
-        console.log(frameCount);
-        timeForFPS -= 1.0;
-        frameCount = 0
-    }
+function showLoadingState() {
+    viewElements.loadingState.style.visibility = "visible";
+    viewElements.loadedState.style.visibility = "hidden";
+}
+function showLoadedState() {
+
+    viewElements.loadingState.style.visibility = "hidden";
+    viewElements.loadedState.style.visibility = "visible";
 }
 
+function buildAnimationOptions(animations: string[]) {
+    animations.forEach(animation => {
+        let newOption = document.createElement("option") as HTMLOptionElement;
+        newOption.value = animation;
+        newOption.text = animation;
+        viewElements.animationSelect.appendChild(newOption);
+    });
+}
+
+// There is something weird going on with the joints, so when we use joints the orientation of the model changes(maybe it is because in blender Z is UP!)
+// Also when i rotate animated models, things gets weird(like, it rotates twice the desired amount, among other weird behaviours)
+// So, this 2 functions belows exists to work around those behaviours... hopefully i can fix the issues soon!
+function setupStaticModel() {
+    theModel.renderer = staticRenderer;
+    theModel.transform.position = new Vector3(0, -1, -7);
+    theModel.transform.scale = new Vector3(0.4, 0.4, 0.4);
+    theModel.transform.setRotation(new Vector3(0, 0, 0));
+}
+
+function setupAnimatedModel() {
+    theModel.renderer = animatedRenderer;
+    theModel.transform.position = new Vector3(0, 0.6, -3);
+    theModel.transform.scale = new Vector3(1, 1, 1);
+    theModel.transform.setRotation(new Vector3(degToRad(-45), 0, 0));
+}

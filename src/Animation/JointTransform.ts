@@ -2,7 +2,6 @@ import { Matrix4 } from "../Rendering/matrix";
 import { Quaternion } from "../Rendering/quaternion";
 import { Vector3 } from "../Rendering/vector";
 
-
 //A list of JointTransform, represent the "pose" of the model
 //A JointTransform holds position and rotation relative to the parent joint(or the origin if it is the root)
 export class JointTransform {

@@ -24,5 +24,7 @@ export class StaticModel extends Model {
         this.bufferData(this.textureCoords, textureCoords, WebGLRenderingContext.ARRAY_BUFFER);
     }
 
-    update(): void { }
+    update(): void {
+        
+    }
 }

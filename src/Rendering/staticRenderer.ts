@@ -29,6 +29,7 @@ export class StaticRenderer extends BaseRenderer {
         this.reverseLightDirectionLocation = context.getUniformLocation(program, "u_reverseLightDirection");
     }
 
+    //TODO: Move this out
     loadTexture(img: HTMLImageElement): WebGLTexture {
         let texture = this.context.createTexture();
         this.context.bindTexture(this.context.TEXTURE_2D, texture);

@@ -1,6 +1,6 @@
 import { JointTransform } from "./JointTransform";
 
-export class HumbleKeyframe { //Keyframe is taken =(
+export class HumbleKeyframe { //The name "Keyframe" is taken =(
     timestamp: number;
     pose: Pose;
     constructor(timestamp: number, pose: Pose) {

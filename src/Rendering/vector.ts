@@ -148,6 +148,7 @@ export class Vector3 extends Vector2 {
         super(x ?? 0, y ?? 0);
         this.z = z ?? 0;
     }
+    
     static zero: Vector3 = new Vector3(0, 0, 0);
     static forward: Vector3 = new Vector3(0, 0, -1);
     static backward: Vector3 = new Vector3(0, 0, 1);

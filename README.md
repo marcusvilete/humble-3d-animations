@@ -1,10 +1,15 @@
 # humble-3d-animations
 
 
-This is another very humble experiment i built while studying basic computer graphics.
+This is another very humble experiment i built while studying basic computer graphics programming. This time i am struggling with skinning meshes and their animations. Models and animations are loaded from a GLTF file.
 
-This time i am struggling on skinning meshes and then animating them.
 
-Models and animations are loaded from a GLTF file.
+It is a very early version and has a lot of bugs, but this is the first version that "kinda works"... Hopefully i'm able to fix everything in the near future!
 
-To be continued...
+
+For the record, i learned a lot from  [WebGL Fundamentals](https://webglfundamentals.org/) and [Euclidean Space](http://www.euclideanspace.com/), among other resources scattered around the web.
+
+The [model](https://blendswap.com/blend/7791) i'm using in this experiment was created by the user [pasilan](https://blendswap.com/profile/49770) and released under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). I also tried with some models and animations from [mixamo](http://mixamo.com/) with relative success
+
+
+[< Try it here >](https://marcusvilete.github.io/humble-3d-animations/index.html)

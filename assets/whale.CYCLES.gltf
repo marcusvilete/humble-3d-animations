@@ -336,7 +336,7 @@
                     }
                 }
             ],
-            "name" : "ATTACK",
+            "name" : "Attack",
             "samplers" : [
                 {
                     "input" : 7,
@@ -559,7 +559,7 @@
                     }
                 }
             ],
-            "name" : "swim",
+            "name" : "Swim",
             "samplers" : [
                 {
                     "input" : 26,

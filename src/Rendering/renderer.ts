@@ -14,7 +14,9 @@ export abstract class BaseRenderer implements Renderer {
         this.context = context;
         this.program = program;
     }
+
     abstract render(model: Model, camera: Camera): void;
+    
     getContext(): WebGLRenderingContext {
         return this.context;
     }

@@ -1,4 +1,4 @@
-import { Transform } from "../transform";
+import { Transform } from "./transform";
 
 //TODO: Maybe refactor this into a generic type like "Treeish<T>"
 export interface TreeNode { // originally it was going to be "Node", but it was taken by the DOM "Node"

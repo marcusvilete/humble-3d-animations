@@ -7,11 +7,13 @@ export class Scene {
     activeCamera: Camera;
     globalLightDirection: Vector3;
     rootNodes: TreeNode[];
+    renderables: Model[];
 
     constructor(camera?: Camera, globalLightDirection?: Vector3, nodes?: TreeNode[]) {
         this.activeCamera = camera ?? null;
         this.globalLightDirection = globalLightDirection ?? null;
         this.rootNodes = nodes ?? [];
+        this.renderables = [];
     }
 
     update(): void {
@@ -20,15 +22,11 @@ export class Scene {
         });
     }
 
-
     render(): void {
-        //TODO: maybe we should have a list of renderables?
-        this.rootNodes.forEach(rootNode => {
-            let model = rootNode as Model;
-            if (model.render) {
-                model.update();
-                model.render(this.activeCamera);
-            }
+        //TODO: comeback here later
+        this.renderables.forEach(renderable => {
+            renderable.update();
+            renderable.render(this.activeCamera);
         });
     }
 }
