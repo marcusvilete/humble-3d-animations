@@ -12,4 +12,7 @@ For the record, i learned a lot from  [WebGL Fundamentals](https://webglfundamen
 The [model](https://blendswap.com/blend/7791) i'm using in this experiment was created by the user [pasilan](https://blendswap.com/profile/49770) and released under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). I also tried with some models and animations from [mixamo](http://mixamo.com/) with relative success
 
 
-[< Try it here >](https://marcusvilete.github.io/humble-3d-animations/index.html)
+PS: Some browsers do not support floating point textures (which this experiment currently rely on). I'm looking to work around it, but meanwhile this MAY OR MAY NOT WORK!  xD
+
+
+[< Try it here >](https://marcusvilete.github.io/humble-3d-animations/index.html) 
