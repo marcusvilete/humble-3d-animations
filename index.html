@@ -33,6 +33,7 @@
         * a_weights[1] + getBoneMatrix(a_joints[2]) * a_weights[2] + getBoneMatrix(a_joints[3]) * a_weights[3]; mat4 world = u_worldMatrix * skinMatrix; gl_Position = u_projectionMatrix * u_viewMatrix * world * a_position; v_texcoord = a_texcoord; v_normal
         = mat3(world) * a_normal; }
     </script>
+
     <script id="fragment-shader-3d-textured-skinned" type="x-shader/x-fragment">
         precision mediump float; varying vec2 v_texcoord; varying vec3 v_normal; uniform sampler2D u_texture; uniform vec3 u_reverseLightDirection; void main() { vec3 normal = normalize(v_normal); float light = dot(normal, u_reverseLightDirection) * .5 + .5;;
         gl_FragColor = texture2D(u_texture, v_texcoord); gl_FragColor.rgb *= light; }
@@ -42,6 +43,7 @@
         attribute vec4 a_position; attribute vec2 a_texcoord; attribute vec3 a_normal; uniform mat4 u_worldMatrix; uniform mat4 u_viewMatrix; uniform mat4 u_projectionMatrix; varying vec2 v_texcoord; varying vec3 v_normal; void main() { gl_Position = u_projectionMatrix
         * u_viewMatrix * u_worldMatrix * a_position; v_texcoord = a_texcoord; v_normal = mat3(u_worldMatrix) * a_normal; }
     </script>
+
     <script id="fragment-shader-3d-textured-lit" type="x-shader/x-fragment">
         precision mediump float; varying vec2 v_texcoord; varying vec3 v_normal; uniform sampler2D u_texture; uniform vec3 u_reverseLightDirection; void main() { vec3 normal = normalize(v_normal); float light = dot(normal, u_reverseLightDirection) * .5 + .5;;
         gl_FragColor = texture2D(u_texture, v_texcoord); gl_FragColor.rgb *= light; }
