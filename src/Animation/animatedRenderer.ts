@@ -176,6 +176,8 @@ export class AnimatedRenderer extends BaseRenderer {
         this.context.activeTexture(this.context.TEXTURE1);
         this.context.bindTexture(this.context.TEXTURE_2D, model.boneTexture);
 
+        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, model.indices);
+
 
         this.context.drawElements(
             WebGLRenderingContext.TRIANGLES,

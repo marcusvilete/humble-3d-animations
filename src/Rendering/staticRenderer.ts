@@ -136,6 +136,8 @@ export class StaticRenderer extends BaseRenderer {
             0          // 0 = start at the beginning of the buffer
         );
 
+        this.context.bindBuffer(this.context.ELEMENT_ARRAY_BUFFER, model.indices);
+
         this.context.activeTexture(this.context.TEXTURE0);
         this.context.bindTexture(this.context.TEXTURE_2D, model.texture);
 
